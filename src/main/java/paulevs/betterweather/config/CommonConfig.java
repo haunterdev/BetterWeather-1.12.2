@@ -15,6 +15,7 @@ public class CommonConfig {
 	public static final int CLOUD_HEIGHT_VANILLA = 128;
 
 	private static boolean useVanillaClouds;
+	private static boolean vanillaRainControl;
 	private static String cloudHeightPreset;
 	private static int cloudHeightCustom;
 	private static int cloudHeight;
@@ -34,8 +35,24 @@ public class CommonConfig {
 	private static Set<Integer> eternalThunderDims;
 
 	public static void init() {
+		defineEntries();
+		CONFIG.save();
+		loadFields();
+	}
+
+	/** Define every entry with its hard-coded default. Reused by {@link #resetToDefaults()}. */
+	private static void defineEntries() {
 		CONFIG.addEntry("useVanillaClouds", false,
 			"Use vanilla clouds texture as a base map for clouds",
+			"Default value is false"
+		);
+		CONFIG.addEntry("vanillaRainControl", false,
+			"Tie rain to the vanilla weather state instead of localized rain fronts.",
+			"When true, the vanilla /weather command drives the whole world: '/weather rain'",
+			"makes EVERY cloud a rain cloud globally (vanilla-style), '/weather thunder' makes",
+			"the whole world thunderstorm, and '/weather clear' returns to fair-weather clouds.",
+			"When false (default), rain is localized: scattered rain fronts roam the world and",
+			"the vanilla weather command has no effect on BetterWeather.",
 			"Default value is false"
 		);
 		CONFIG.addEntry("cloudHeightPreset", "vanilla",
@@ -101,9 +118,12 @@ public class CommonConfig {
 			"Example: \"0\" makes the Overworld always thundering",
 			"Default value is \"\" (no dimensions set to eternal thunder)"
 		);
-		CONFIG.save();
+	}
 
+	/** Read the active values out of the config into the static fields, applying clamps/parsing. */
+	private static void loadFields() {
 		useVanillaClouds = CONFIG.getBool("useVanillaClouds");
+		vanillaRainControl = CONFIG.getBool("vanillaRainControl");
 		cloudHeightPreset = normalizePreset(CONFIG.getString("cloudHeightPreset"));
 		cloudHeightCustom = clampHeight(CONFIG.getInt("cloudHeightCustom"));
 		cloudHeight = resolveCloudHeight(cloudHeightPreset, cloudHeightCustom);
@@ -130,8 +150,24 @@ public class CommonConfig {
 		eternalThunderDims = parseDimSet(eternalThunderDimsRaw);
 	}
 
+	/** Restore every common config value to its default and persist. */
+	public static void resetToDefaults() {
+		CONFIG.clear();
+		defineEntries();
+		CONFIG.flush();
+		loadFields();
+	}
+
 	public static boolean useVanillaClouds() {
 		return useVanillaClouds;
+	}
+
+	/**
+	 * When {@code true}, BetterWeather rain follows the vanilla weather state (the {@code /weather}
+	 * command / world rain) globally, instead of the localized rain-front simulation.
+	 */
+	public static boolean isVanillaRainControl() {
+		return vanillaRainControl;
 	}
 
 	/**
@@ -165,6 +201,20 @@ public class CommonConfig {
 		cloudHeightCustom = clampHeight(height);
 		cloudHeight = resolveCloudHeight(cloudHeightPreset, cloudHeightCustom);
 		CONFIG.set("cloudHeightCustom", cloudHeightCustom);
+		CONFIG.flush();
+	}
+
+	/** Live-set vanilla rain control and persist. */
+	public static void setVanillaRainControl(boolean enabled) {
+		vanillaRainControl = enabled;
+		CONFIG.set("vanillaRainControl", enabled);
+		CONFIG.flush();
+	}
+
+	/** Live-set frequent rain and persist. */
+	public static void setFrequentRain(boolean enabled) {
+		frequentRain = enabled;
+		CONFIG.set("frequentRain", enabled);
 		CONFIG.flush();
 	}
 

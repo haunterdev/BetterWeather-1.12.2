@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import paulevs.betterweather.client.rendering.CloudRenderer;
 
 import java.io.File;
 
@@ -16,6 +17,13 @@ public class ClientConfig {
 	private static int cloudViewDistance;
 
 	public static void init() {
+		defineEntries();
+		CONFIG.save();
+		loadFields();
+	}
+
+	/** Define every entry with its hard-coded default. Reused by {@link #resetToDefaults()}. */
+	private static void defineEntries() {
 		CONFIG.addEntry("fluffyClouds", true,
 			"Render clouds fluffy, if false clouds will use block-like rendering",
 			"Default value is true"
@@ -24,7 +32,10 @@ public class ClientConfig {
 			"How far clouds render, as a radius in 32-block cloud tiles.",
 			"Clouds draw without fog, so higher values let you watch distant rain fronts approach,",
 			"beyond the terrain render distance.",
-			"Range 4..16 (16 ~= 512 blocks). Higher = more GPU/CPU.",
+			"Minimum 4. There is no soft cap: values above " + CloudRenderer.LAG_WARN_RADIUS
+				+ " allocate a lot of cloud geometry and can cause HEAVY LAG (the in-game",
+			"slider warns past that point). Hard ceiling is " + CloudRenderer.HARD_MAX_RADIUS
+				+ " (~" + (CloudRenderer.HARD_MAX_RADIUS * 32) + " blocks).",
 			"Default value is 9"
 		);
 		CONFIG.addEntry("b173RainColor", true,
@@ -33,11 +44,21 @@ public class ClientConfig {
 			"false = modern, more neutral rain tint",
 			"Default value is true"
 		);
-		CONFIG.save();
+	}
 
+	/** Read the active values out of the config into the static fields. */
+	private static void loadFields() {
 		fluffyClouds = CONFIG.getBool("fluffyClouds");
 		betaRainColor = CONFIG.getBool("b173RainColor");
 		cloudViewDistance = clampViewDistance(CONFIG.getInt("cloudViewDistanceChunks"));
+	}
+
+	/** Restore every client config value to its default and persist. */
+	public static void resetToDefaults() {
+		CONFIG.clear();
+		defineEntries();
+		CONFIG.flush();
+		loadFields();
 	}
 
 	/**
@@ -81,7 +102,7 @@ public class ClientConfig {
 
 	private static int clampViewDistance(int chunks) {
 		if (chunks < 4) return 4;
-		if (chunks > 16) return 16;
+		if (chunks > CloudRenderer.HARD_MAX_RADIUS) return CloudRenderer.HARD_MAX_RADIUS;
 		return chunks;
 	}
 

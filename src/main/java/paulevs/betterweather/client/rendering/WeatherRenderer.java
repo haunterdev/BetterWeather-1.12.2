@@ -36,11 +36,13 @@ public class WeatherRenderer {
 	// allocating thousands of BlockPos per frame - that GC churn was pushing frametime past
 	// the vsync step and halving FPS during rain.
 	private final BlockPos.MutableBlockPos scratchPos = new BlockPos.MutableBlockPos();
-	// Blue-channel multiplier for rain verts, refreshed per frame from config.
-	// 1.0 = "b1.7.3 rain color" (original Beta 1.7.3 light-blue hue); <1 = modern neutral tint.
-	// Placeholder modern value, tunable when the modern look is designed.
-	private static final float MODERN_RAIN_BLUE = 0.85F;
-	private float rainBlueScale = 1F;
+	// Red/green multiplier for rain verts, refreshed per frame from config. Beta 1.7.3 rain was
+	// visibly blue-tinted, so "b1.7.3 rain color" dims the red+green channels (leaving blue full)
+	// to recreate that hue. Modern mode uses 1.0 = neutral grey rain (no tint). Snow is never
+	// tinted. The old code only scaled BLUE by 0.85 for modern, a difference too small to see -
+	// which is why the toggle appeared to do nothing.
+	private static final float BETA_RAIN_RG = 0.7F;
+	private float rainRgScale = 1F;
 
 	public WeatherRenderer() {
 		randomOffset = new float[256];
@@ -74,7 +76,7 @@ public class WeatherRenderer {
 
 		if (iy - rainTop > 40) return;
 
-		rainBlueScale = ClientConfig.betaRainColor() ? 1F : MODERN_RAIN_BLUE;
+		rainRgScale = ClientConfig.betaRainColor() ? BETA_RAIN_RG : 1F;
 
 		float vOffset = (float) (((double) level.getTotalWorldTime() + delta) * 0.05 % 1.0);
 		Vec3d pos = getPosition(entity);
@@ -199,9 +201,9 @@ public class WeatherRenderer {
 		float v2 = ((rainTop - terrain) * 0.0625F + v1);
 
 		float light = level.getLightBrightness(scratchPos.setPos(x, terrain, z));
-		// Rain gets the b1.7.3 blue tint via the texture; snow stays white. Modern mode
-		// dampens the blue channel. Snow is never tinted.
-		float lightBlue = snow ? light : light * rainBlueScale;
+		// Beta-blue tint: dim red+green so the full-strength blue channel dominates. Snow is
+		// never tinted; modern mode leaves rainRgScale at 1.0 for neutral grey rain.
+		float rg = snow ? light : light * rainRgScale;
 		float alpha = WeatherAPI.sampleFront(level, x, z, 0.1F);
 		alpha = BWMath.clamp((alpha - 0.2F) * 2, 0.5F, 1F);
 
@@ -229,10 +231,10 @@ public class WeatherRenderer {
 		double z1 = z + 0.5 + dz;
 		double z2 = z + 0.5 - dz;
 
-		buffer.pos(x1, terrain, z1).tex(u1, v1).color(light, light, lightBlue, alpha).endVertex();
-		buffer.pos(x1, rainTop, z1).tex(u1, v2).color(light, light, lightBlue, alpha).endVertex();
-		buffer.pos(x2, rainTop, z2).tex(u2, v2).color(light, light, lightBlue, alpha).endVertex();
-		buffer.pos(x2, terrain, z2).tex(u2, v1).color(light, light, lightBlue, alpha).endVertex();
+		buffer.pos(x1, terrain, z1).tex(u1, v1).color(rg, rg, light, alpha).endVertex();
+		buffer.pos(x1, rainTop, z1).tex(u1, v2).color(rg, rg, light, alpha).endVertex();
+		buffer.pos(x2, rainTop, z2).tex(u2, v2).color(rg, rg, light, alpha).endVertex();
+		buffer.pos(x2, terrain, z2).tex(u2, v1).color(rg, rg, light, alpha).endVertex();
 	}
 
 	private void renderNormalSection(World level, int x, int y, int z, Vec3d pos, Vec3d dir, int rainTop, BufferBuilder buffer, float vOffset, boolean snow) {
@@ -251,9 +253,9 @@ public class WeatherRenderer {
 		float v2 = (rainTop - terrain) * 0.0625F + v1;
 
 		float light = level.getLightBrightness(scratchPos.setPos(x, terrain, z));
-		// Rain gets the b1.7.3 blue tint via the texture; snow stays white. Modern mode
-		// dampens the blue channel. Snow is never tinted.
-		float lightBlue = snow ? light : light * rainBlueScale;
+		// Beta-blue tint: dim red+green so the full-strength blue channel dominates. Snow is
+		// never tinted; modern mode leaves rainRgScale at 1.0 for neutral grey rain.
+		float rg = snow ? light : light * rainRgScale;
 		float alpha = WeatherAPI.sampleFront(level, x, z, 0.1F);
 		alpha = BWMath.clamp((alpha - 0.2F) * 2, 0.5F, 1F);
 
@@ -281,10 +283,10 @@ public class WeatherRenderer {
 		double z1 = z + 0.5 + dz;
 		double z2 = z + 0.5 - dz;
 
-		buffer.pos(x1, terrain, z1).tex(u1, v1).color(light, light, lightBlue, alpha).endVertex();
-		buffer.pos(x1, rainTop, z1).tex(u1, v2).color(light, light, lightBlue, alpha).endVertex();
-		buffer.pos(x2, rainTop, z2).tex(u2, v2).color(light, light, lightBlue, alpha).endVertex();
-		buffer.pos(x2, terrain, z2).tex(u2, v1).color(light, light, lightBlue, alpha).endVertex();
+		buffer.pos(x1, terrain, z1).tex(u1, v1).color(rg, rg, light, alpha).endVertex();
+		buffer.pos(x1, rainTop, z1).tex(u1, v2).color(rg, rg, light, alpha).endVertex();
+		buffer.pos(x2, rainTop, z2).tex(u2, v2).color(rg, rg, light, alpha).endVertex();
+		buffer.pos(x2, terrain, z2).tex(u2, v1).color(rg, rg, light, alpha).endVertex();
 	}
 
 	private void renderWaterCircles(World level, int x, int y, int z, Vec3d pos, Vec3d dir, BufferBuilder buffer, float vOffset, float radius) {

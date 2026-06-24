@@ -17,7 +17,25 @@ the rendering and simulation rebuilt on the 1.12.2 Forge rendering pipeline.
 - **Better rain and snow rendering.** Precipitation uses level of detail and renders over larger distances.
 - **Better weather sounds.** Improved rain ambience.
 - **Clouds beyond render distance.** Clouds can extend past the terrain view distance without clipping at the far plane.
-- **In game config.** Cloud height presets (Beta 108 / vanilla 128 / custom), fluffy toggle, rain color, cloud speed, and cloud view distance are editable live under Mods, Better Weather, Config.
+- **In game config.** Cloud height presets (Beta 108 / vanilla 128 / custom), fluffy toggle, rain color, vanilla rain control, frequent rain, cloud speed, and cloud view distance are editable live under Mods, Better Weather, Config.
+
+## Commands
+
+Because BetterWeather rain is **localized** (rain travels in fronts instead of falling
+everywhere at once), `/findrain` helps you locate active weather.
+
+| Command | Description |
+|---------|-------------|
+| `/findrain [radius] [step]` | Locate the nearest localized rain front. With no arguments it auto-expands the search until rain is found, then prints the coordinates, distance, front strength, and a ready-to-use `/tp`. Optional `radius` (16+) forces a fixed scan range; `step` (1-64) sets the sample spacing (larger = faster but coarser). |
+| `/bwtoggle <clouds\|rain\|scroll>` | Toggle a render subsystem on/off (debugging). |
+| `/bwdebug` | Print live fog/cloud sample values at your position (debugging). |
+
+These are **client-side** commands: they are handled locally by the client, so they work in
+singleplayer and on any server, and do not conflict with server-side command libraries
+(such as Brigadier-based mods like brigo).
+
+> Tip: if `vanillaRainControl` is enabled in the config, rain is global and follows the vanilla
+> `/weather` command, so `/findrain` will report rain everywhere while it is raining.
 
 ## Requirements
 

@@ -23,7 +23,6 @@ public class BetterWeatherRenderer {
 	private static final CloudRenderer CLOUD_RENDERER = new CloudRenderer();
 	private static final WeatherRenderer WEATHER_RENDERER = new WeatherRenderer();
 	private static float fogDistance = 1F;
-	private static boolean isInWater;
 	private static boolean initialized;
 	public static float fogColorR;
 	public static float fogColorG;
@@ -72,20 +71,21 @@ public class BetterWeatherRenderer {
 		WEATHER_RENDERER.update(manager);
 	}
 
-	public static void renderBeforeWater(float delta, Minecraft minecraft) {
-		if (minecraft.world.provider.doesWaterVaporize()) return;
-		isInWater = minecraft.getRenderViewEntity().isInsideOfMaterial(Material.WATER);
-		if (!isInWater) return;
-		render(delta, minecraft);
-	}
-
 	public static void renderAfterWater(float delta, Minecraft minecraft) {
 		if (minecraft.world.provider.doesWaterVaporize()) return;
-		if (isInWater) return;
 		render(delta, minecraft);
 	}
 
 	private static void render(float delta, Minecraft minecraft) {
+		// Underwater / in lava the medium fog is dense and short-range; vanilla never shows the
+		// sky, clouds, or weather through it. Our cloud pass deliberately draws fog-less (so far
+		// rain fronts extend past terrain fog on land), so without this guard the clouds punch
+		// straight through both water and lava fog (GH issue #3). Skip the whole pass while the
+		// camera eye is submerged.
+		Entity camera = minecraft.getRenderViewEntity();
+		if (camera.isInsideOfMaterial(Material.WATER) || camera.isInsideOfMaterial(Material.LAVA)) {
+			return;
+		}
 		if (!initialized) {
 			update(minecraft.getTextureManager());
 			initialized = true;

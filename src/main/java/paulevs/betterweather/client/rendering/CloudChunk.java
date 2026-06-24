@@ -39,6 +39,11 @@ public class CloudChunk {
 		vertexBuffer = new VertexBuffer(DefaultVertexFormats.POSITION_TEX_COLOR);
 	}
 
+	/** Free this chunk's GL vertex buffer. Call before discarding the chunk (pool regrow). */
+	public void dispose() {
+		vertexBuffer.deleteGlBuffers();
+	}
+
 	public void checkIfNeedUpdate(int x, int z) {
 		needUpdate = chunkX != x || chunkZ != z;
 	}

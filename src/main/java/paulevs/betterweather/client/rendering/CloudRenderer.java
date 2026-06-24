@@ -31,51 +31,87 @@ public class CloudRenderer {
 	private static final short[] CLOUD_DATA = new short[8192];
 
 	private static final int MAX_UPDATES_PER_FRAME = 6;
-	// Cloud tiles are allocated once for MAX_RADIUS; viewRadius (live, from config) controls how
-	// many actually render. Clouds draw fog-less (vanilla disables fog before our pass), so a
-	// larger viewRadius shows distant rain fronts approaching well beyond the terrain render
-	// distance, instead of being culled to it.
-	private static final int MAX_RADIUS = 16;
-	private static final int SIDE = MAX_RADIUS * 2 + 1;
-	private static final int CAPACITY = SIDE * SIDE;
+	// Hard ceiling on the cloud view radius (in 32-block tiles). The chunk pool grows to
+	// 'side*side' = (2*r+1)^2 VBOs, so this caps memory/GL-object use - a radius of 64 is already
+	// ~16k cloud chunks (the "expect heavy lag" zone the config warns about). This is a safety
+	// cap to avoid OOM, not a soft preference.
+	public static final int HARD_MAX_RADIUS = 64;
+	// Soft threshold above which the in-game config warns about heavy lag.
+	public static final int LAG_WARN_RADIUS = 16;
+	// Baseline pool radius pre-allocated up front; the pool only grows beyond this if the
+	// configured view distance is larger. Clouds draw fog-less, so a larger viewRadius shows
+	// distant rain fronts approaching well beyond the terrain render distance.
+	private static final int MIN_POOL_RADIUS = 16;
 	public static float fogDistance;
 	private int viewRadius = 9;
+	// Pool sizing - dynamic so the view distance can exceed the old fixed cap. 'maxRadius' is the
+	// radius the current chunk pool covers; 'side' = 2*maxRadius+1 is the toroidal-cache stride.
+	private int maxRadius;
+	private int side;
 	// Client-smoothed cloud-scroll clock; decouples cloud drift from server tick hitches.
 	private static double smoothTime = Double.NaN;
 	// Debug bisect (/bwtoggle scroll): freeze cloud drift to isolate scroll vs chunk-rebuild
 	// as the cause of rubber-banding.
 	public static boolean debugFreezeScroll;
 
-	private final CloudChunk[] chunks = new CloudChunk[CAPACITY];
+	private CloudChunk[] chunks;
 	private final FrustumCulling culling = new FrustumCulling();
-	private final int[][] offsets;
+	private int[][] offsets;
 
 	private CloudTexture cloudTexture;
 
 	public CloudRenderer() {
-		for (short i = 0; i < chunks.length; i++) {
+		viewRadius = clampRadius(ClientConfig.getCloudViewDistance());
+		// Pre-allocate at least the baseline pool, larger if the saved view distance demands it.
+		buildPool(Math.max(viewRadius, MIN_POOL_RADIUS));
+		culling.setFOV((float) Math.toRadians(60F));
+	}
+
+	/**
+	 * (Re)allocate the cloud-chunk pool to cover the given radius. Disposes the old pool's GL
+	 * buffers first. The pool is a toroidal cache of (2*radius+1)^2 chunks; the offset list is the
+	 * render order, sorted nearest-first so the closest (most visible) tiles rebuild/draw first.
+	 */
+	private void buildPool(int radius) {
+		if (chunks != null) {
+			for (CloudChunk chunk : chunks) {
+				chunk.dispose();
+			}
+		}
+		maxRadius = radius;
+		side = radius * 2 + 1;
+		int capacity = side * side;
+
+		chunks = new CloudChunk[capacity];
+		for (int i = 0; i < capacity; i++) {
 			chunks[i] = new CloudChunk();
 		}
 
-		List<int[]> offsets = new ArrayList<>(CAPACITY);
-		for (byte x = -MAX_RADIUS; x <= MAX_RADIUS; x++) {
-			for (byte z = -MAX_RADIUS; z <= MAX_RADIUS; z++) {
-				offsets.add(new int[] { x, z });
+		List<int[]> offsetList = new ArrayList<>(capacity);
+		for (int x = -radius; x <= radius; x++) {
+			for (int z = -radius; z <= radius; z++) {
+				offsetList.add(new int[] { x, z });
 			}
 		}
-		offsets.sort((v1, v2) -> {
+		offsetList.sort((v1, v2) -> {
 			int d1 = v1[0] * v1[0] + v1[1] * v1[1];
 			int d2 = v2[0] * v2[0] + v2[1] * v2[1];
 			return Integer.compare(d1, d2);
 		});
-		this.offsets = offsets.toArray(new int[0][]);
-		culling.setFOV((float) Math.toRadians(60F));
-		viewRadius = clampRadius(ClientConfig.getCloudViewDistance());
+		this.offsets = offsetList.toArray(new int[0][]);
 	}
 
-	/** Live-set how many cloud tiles render (radius, in 32-block tiles). Clamped to MAX_RADIUS. */
-	public void setViewDistance(int chunks) {
-		viewRadius = clampRadius(chunks);
+	/**
+	 * Live-set how many cloud tiles render (radius, in 32-block tiles). Clamped to
+	 * {@link #HARD_MAX_RADIUS}. Grows the chunk pool if the new radius exceeds the current pool
+	 * (never shrinks - a regrow allocates GL buffers, so we avoid churning it back down).
+	 */
+	public void setViewDistance(int tiles) {
+		int r = clampRadius(tiles);
+		if (r > maxRadius) {
+			buildPool(r);
+		}
+		viewRadius = r;
 	}
 
 	/** Current cloud cull radius in blocks (viewRadius tiles * 32). */
@@ -85,7 +121,7 @@ public class CloudRenderer {
 
 	private static int clampRadius(int r) {
 		if (r < 1) return 1;
-		if (r > MAX_RADIUS) return MAX_RADIUS;
+		if (r > HARD_MAX_RADIUS) return HARD_MAX_RADIUS;
 		return r;
 	}
 
@@ -96,7 +132,7 @@ public class CloudRenderer {
 	}
 
 	private int getIndex(int x, int y) {
-		return MathUtil.wrap(x, SIDE) * SIDE + MathUtil.wrap(y, SIDE);
+		return MathUtil.wrap(x, side) * side + MathUtil.wrap(y, side);
 	}
 
 	public void render(float delta, Minecraft minecraft) {

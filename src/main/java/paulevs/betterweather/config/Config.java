@@ -140,6 +140,17 @@ public class Config {
 		writeFile();
 	}
 
+	/**
+	 * Drop all in-memory entries AND the values loaded from disk. After this, re-running the
+	 * {@code addEntry} sequence repopulates the config with hard-coded defaults (no stored value
+	 * overrides them), which is how "reset to defaults" works.
+	 */
+	public void clear() {
+		entries.clear();
+		preEntries.clear();
+		order.clear();
+	}
+
 	private void writeFile() {
 		file.getParentFile().mkdirs();
 		int max = entries.size() - 1;

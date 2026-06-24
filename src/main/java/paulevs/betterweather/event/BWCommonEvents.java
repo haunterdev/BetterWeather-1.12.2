@@ -6,6 +6,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import paulevs.betterweather.util.LightningUtil;
 
+import java.util.ArrayList;
+
 public class BWCommonEvents {
 
     @SubscribeEvent
@@ -16,7 +18,12 @@ public class BWCommonEvents {
         WorldServer worldServer = (WorldServer) event.world;
         LightningUtil.tick();
 
-        for (Chunk chunk : worldServer.getChunkProvider().getLoadedChunks()) {
+        // Snapshot before iterating: processChunk can spawn lightning and probe
+        // neighbour-chunk blocks, either of which may load/unload chunks and
+        // structurally modify the backing fastutil Long2ObjectOpenHashMap.
+        // fastutil iterators are not fail-fast - mutation mid-iteration corrupts
+        // the iterator and throws NPE in nextEntry (see GH issue #2).
+        for (Chunk chunk : new ArrayList<>(worldServer.getChunkProvider().getLoadedChunks())) {
             LightningUtil.processChunk(worldServer, chunk.x, chunk.z);
         }
     }

@@ -118,6 +118,13 @@ public class WeatherAPI {
         if (WeatherDims.isNoRain(dimId)) return 0F;
         if (WeatherDims.isEternalRain(dimId)) return 1F;
 
+        // Vanilla rain control: ignore the localized front sim and follow the world weather state
+        // (the /weather command). Raining -> full front everywhere (every cloud becomes a rain
+        // cloud); clear -> no front (fair-weather clouds only).
+        if (CommonConfig.isVanillaRainControl()) {
+            return world.isRaining() ? 1F : 0F;
+        }
+
         float front = FRONTS_SAMPLER.sample(x * scale, z * scale);
         if (!CommonConfig.isFrequentRain()) {
             scale *= 0.7;
@@ -132,6 +139,12 @@ public class WeatherAPI {
         int dimId = world.provider.getDimension();
         if (WeatherDims.isNoThunder(dimId)) return 0F;
         if (WeatherDims.isEternalThunder(dimId)) return 1F;
+
+        // Vanilla rain control: follow the world thunder state (/weather thunder) globally instead
+        // of the localized thunderstorm map.
+        if (CommonConfig.isVanillaRainControl()) {
+            return world.isThundering() ? 1F : 0F;
+        }
 
         return THUNDERSTORMS.sample(x * scale, z * scale);
     }
