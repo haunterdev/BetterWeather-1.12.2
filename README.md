@@ -1,14 +1,14 @@
 <div align="center">
   <img src="src/main/resources/assets/better_weather/icon.png" width="120" alt="Better Weather icon"/>
 
-  <h1>Better Weather (1.12.2 Forge)</h1>
+  <h1>Better Weather</h1>
 
   <p>Volumetric fluffy clouds and local, moving weather for Minecraft 1.12.2.</p>
 </div>
 
-A Minecraft Forge 1.12.2 port of [paulevs' Better Weather](https://github.com/paulevsGitch/BetterWeather),
-originally written for Minecraft Beta 1.7.3. All of the original look and behavior is preserved, with
-the rendering and simulation rebuilt on the 1.12.2 Forge rendering pipeline.
+A 1.12.2 port of [paulevs' Better Weather](https://github.com/paulevsGitch/BetterWeather),
+originally written for Minecraft Beta 1.7.3. The cloud rendering and the weather simulation are
+rebuilt on the 1.12.2 rendering pipeline.
 
 ## Features
 
