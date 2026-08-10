@@ -7,7 +7,7 @@
     "mcversion": "${mcversion}",
     "url": "https://github.com/paulevsGitch/BetterWeather",
     "updateUrl": "",
-    "authorList": ["paulevs (original)", "hunterhaunter (1.12.2 port)"],
+    "authorList": ["paulevs (original)", "xy (1.12.2 port)"],
     "credits": "Original mod by paulevs",
     "logoFile": "assets/better_weather/icon.png",
     "screenshots": [],
