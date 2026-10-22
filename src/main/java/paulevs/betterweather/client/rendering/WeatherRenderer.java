@@ -20,6 +20,7 @@ import paulevs.betterweather.api.WeatherAPI;
 import paulevs.betterweather.config.ClientConfig;
 import paulevs.betterweather.config.CommonConfig;
 import paulevs.betterweather.util.BWMath;
+import paulevs.betterweather.util.SeasonCompat;
 
 import java.util.Random;
 
@@ -195,7 +196,7 @@ public class WeatherRenderer {
 		if (!visible) return;
 
 		if (!WeatherAPI.isRaining(level, x, terrain, z)) return;
-		if (level.getBiome(scratchPos.setPos(x, 0, z)).getEnableSnow() != snow) return;
+		if (SeasonCompat.isSnow(level, level.getBiome(scratchPos.setPos(x, terrain, z)), scratchPos) != snow) return;
 
 		float v1 = randomOffset[(x & 15) << 4 | (z & 15)] + vOffset;
 		float v2 = ((rainTop - terrain) * 0.0625F + v1);
@@ -247,7 +248,7 @@ public class WeatherRenderer {
 		if (!visible) return;
 
 		if (!WeatherAPI.isRaining(level, x, terrain, z)) return;
-		if (level.getBiome(scratchPos.setPos(x, 0, z)).getEnableSnow() != snow) return;
+		if (SeasonCompat.isSnow(level, level.getBiome(scratchPos.setPos(x, terrain, z)), scratchPos) != snow) return;
 
 		float v1 = randomOffset[(x & 15) << 4 | (z & 15)] + vOffset;
 		float v2 = (rainTop - terrain) * 0.0625F + v1;

@@ -15,6 +15,7 @@ public class ClientConfig {
 	private static GameSettings options;
 	private static boolean betaRainColor;
 	private static int cloudViewDistance;
+	private static boolean waterHidesClouds;
 
 	public static void init() {
 		defineEntries();
@@ -44,12 +45,18 @@ public class ClientConfig {
 			"false = modern, more neutral rain tint",
 			"Default value is true"
 		);
+		CONFIG.addEntry("waterHidesClouds", true,
+			"Hide clouds and rain behind nearer water, ice and stained glass.",
+			"Turn off if a shader pack draws water strangely with it on.",
+			"Default value is true"
+		);
 	}
 
 	/** Read the active values out of the config into the static fields. */
 	private static void loadFields() {
 		fluffyClouds = CONFIG.getBool("fluffyClouds");
 		betaRainColor = CONFIG.getBool("b173RainColor");
+		waterHidesClouds = CONFIG.getBool("waterHidesClouds");
 		cloudViewDistance = clampViewDistance(CONFIG.getInt("cloudViewDistanceChunks"));
 	}
 
@@ -67,6 +74,11 @@ public class ClientConfig {
 	 */
 	public static boolean betaRainColor() {
 		return betaRainColor;
+	}
+
+	/** Write translucent-block depth before clouds and rain so nearer water hides them. */
+	public static boolean waterHidesClouds() {
+		return waterHidesClouds;
 	}
 
 	/** Raw config flag (ignores the fancy-graphics gate that {@link #renderFluffy()} applies). */

@@ -4,6 +4,9 @@ import net.minecraft.block.material.Material;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.util.BlockRenderLayer;
+import paulevs.betterweather.config.ClientConfig;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -91,6 +94,7 @@ public class BetterWeatherRenderer {
 			initialized = true;
 		}
 		if (dumpRenderEntry) dumpGl("ENTRY");
+		if (ClientConfig.waterHidesClouds()) writeTranslucentDepth(delta, minecraft, camera);
 		if (!debugSkipClouds) renderCloudsExtendedFar(delta, minecraft);
 		if (!debugSkipWeather) WEATHER_RENDERER.render(delta, minecraft);
 		if (dumpRenderEntry) {
@@ -107,6 +111,25 @@ public class BetterWeatherRenderer {
 		// resetColor() invalidates the cache so the following color() actually reaches GL.
 		GlStateManager.resetColor();
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+	}
+
+	/**
+	 * The original drew clouds after water too, but Beta 1.7.3 fancy water wrote its depth in a
+	 * colour-masked pre-pass, so nearer water hid them. 1.12.2 draws the translucent layer with
+	 * depth writes off, which let clouds and rain show through water in front of them (GitHub
+	 * issue #5). Draw the translucent layer once more with colour off and depth on, the same
+	 * pre-pass Beta did, before clouds and rain.
+	 */
+	private static void writeTranslucentDepth(float delta, Minecraft minecraft, Entity camera) {
+		GlStateManager.enableDepth();
+		GlStateManager.depthMask(true);
+		GlStateManager.colorMask(false, false, false, false);
+		GlStateManager.enableAlpha();
+		GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
+		GlStateManager.disableBlend();
+		minecraft.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+		minecraft.renderGlobal.renderBlockLayer(BlockRenderLayer.TRANSLUCENT, delta, 2, camera);
+		GlStateManager.colorMask(true, true, true, true);
 	}
 
 	/**

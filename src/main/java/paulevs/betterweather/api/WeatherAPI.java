@@ -10,6 +10,7 @@ import net.minecraft.world.chunk.Chunk;
 import paulevs.betterweather.config.CommonConfig;
 import paulevs.betterweather.util.BWMath;
 import paulevs.betterweather.util.ImageSampler;
+import paulevs.betterweather.util.SeasonCompat;
 import paulevs.betterweather.util.WeatherDims;
 
 import java.util.ArrayList;
@@ -191,8 +192,9 @@ public class WeatherAPI {
     private static float getRainDensity(World world, int x, int y, int z, boolean includeSnow) {
         if (world.provider.doesWaterVaporize()) return 0;
 
-        Biome biome = world.getBiome(new BlockPos(x, 0, z));
-        boolean canSnow = biome.getEnableSnow();
+        BlockPos column = new BlockPos(x, y, z);
+        Biome biome = world.getBiome(column);
+        boolean canSnow = SeasonCompat.isSnow(world, biome, column);
 
         int count = 0;
         for (int i = 0; i < OFFSET_X.length; i++) {
