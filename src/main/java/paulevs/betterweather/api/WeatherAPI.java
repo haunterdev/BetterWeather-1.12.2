@@ -158,6 +158,8 @@ public class WeatherAPI {
         int max = (int) (getCloudHeight(world) + 4);
         int height = world.getHeight(x, z);
         if (height >= max) return max;
+        // getChunk would load or generate an unloaded column on the server
+        if (!world.isBlockLoaded(new BlockPos(x, 0, z))) return height;
         Chunk chunk = world.getChunk(x >> 4, z >> 4);
         int lx = x & 15;
         int lz = z & 15;

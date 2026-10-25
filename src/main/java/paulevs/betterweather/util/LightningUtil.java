@@ -64,6 +64,8 @@ public final class LightningUtil {
             px = (cx << 4) + dx + 8;
             for (int dz = -radius; dz <= radius; dz++) {
                 pz = (cz << 4) + dz + 8;
+                // the search reaches past this chunk; never load a neighbour to read it
+                if (!world.isBlockLoaded(new BlockPos(px, 0, pz))) continue;
                 py = WeatherAPI.getRainHeight(world, px, pz);
                 if (!WeatherAPI.isThundering(world, px, py, pz)) continue;
                 if (!isLightningRod(world, px, py - 1, pz)) continue;
