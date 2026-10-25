@@ -34,7 +34,7 @@ public class BetterWeatherRenderer {
 	public static float debugRainDensity;
 	public static float debugInCloud;
 	public static float debugFogDistance;
-	// Debug bisect toggles (/bwtoggle).
+	// Render toggles for /bwtoggle.
 	public static boolean debugSkipClouds;
 	public static boolean debugSkipWeather;
 	public static boolean debugSkipFog;

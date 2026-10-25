@@ -12,8 +12,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Client-side debug bisect: toggle individual BetterWeather render subsystems off/on
- * to isolate which one causes a visual bug.
+ * Client command that turns individual BetterWeather render parts off and on, for
+ * tracking down a visual problem.
  * <p>
  * {@code /bwtoggle clouds} - cloud rendering<br>
  * {@code /bwtoggle rain} - rain/snow rendering<br>

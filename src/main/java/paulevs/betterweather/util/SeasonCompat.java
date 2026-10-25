@@ -17,7 +17,7 @@ import java.lang.invoke.MethodType;
  * BetterWeather replaces that renderer, so it asks the same hook here, using vanilla's 0.15
  * snow line. Without Serene Seasons it uses the biome's temperature at the position, as vanilla's
  * renderRainSnow and snow layer placement do, so cold high ground (Extreme Hills, Taiga peaks)
- * snows where its ground is snowy. The biome snow flag alone left those columns raining.
+ * snows where its ground is snowy.
  *
  * <p>Callers pass the column at its rain height, the block the snow layer would sit in.
  */

@@ -22,8 +22,7 @@ public class MixinWorldRainStrength {
     private void betterweather_getRainStrength(float delta, CallbackInfoReturnable<Float> info) {
         World self = (World) (Object) this;
         if (!self.isRemote) return;
-        // Debug bisect (/bwtoggle rainstr): let vanilla return so the rain sky/lightmap
-        // dimming is removed, to test whether that is the source of the F1 darkness.
+        // /bwtoggle rainstr: leave vanilla's rain strength (sky and lightmap dimming) in place.
         if (BetterWeatherRenderer.debugSkipRainStrength) return;
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.world == null || mc.getRenderViewEntity() == null) return;

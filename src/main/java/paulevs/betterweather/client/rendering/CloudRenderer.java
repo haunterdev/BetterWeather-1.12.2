@@ -50,8 +50,7 @@ public class CloudRenderer {
 	private int side;
 	// Client-smoothed cloud-scroll clock; decouples cloud drift from server tick hitches.
 	private static double smoothTime = Double.NaN;
-	// Debug bisect (/bwtoggle scroll): freeze cloud drift to isolate scroll vs chunk-rebuild
-	// as the cause of rubber-banding.
+	// /bwtoggle scroll: freeze cloud drift.
 	public static boolean debugFreezeScroll;
 
 	private CloudChunk[] chunks;
