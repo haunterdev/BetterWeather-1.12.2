@@ -192,7 +192,7 @@ public class WeatherAPI {
     private static float getRainDensity(World world, int x, int y, int z, boolean includeSnow) {
         if (world.provider.doesWaterVaporize()) return 0;
 
-        BlockPos column = new BlockPos(x, y, z);
+        BlockPos column = new BlockPos(x, getRainHeight(world, x, z), z);
         Biome biome = world.getBiome(column);
         boolean canSnow = SeasonCompat.isSnow(world, biome, column);
 
