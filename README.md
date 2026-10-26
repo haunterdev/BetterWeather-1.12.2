@@ -42,7 +42,7 @@ singleplayer and on any server, and do not conflict with server-side command lib
 
 - Minecraft 1.12.2
 - Minecraft Forge 14.23.5.2860 or newer
-- [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixinbooter) (the mod loads its mixins through MixinBooter)
+- [MixinBooter](https://www.curseforge.com/minecraft/mc-mods/mixin-booter) (the mod loads its mixins through MixinBooter)
 
 ## Installation
 
