@@ -81,8 +81,8 @@ public class BetterWeatherRenderer {
 
 	private static void render(float delta, Minecraft minecraft) {
 		// Underwater / in lava the medium fog is dense and short-range; vanilla never shows the
-		// sky, clouds, or weather through it. Our cloud pass deliberately draws fog-less (so far
-		// rain fronts extend past terrain fog on land), so without this guard the clouds punch
+		// sky, clouds, or weather through it. Our cloud pass uses the land fog (or none, with
+		// cloud fog off), so without this guard the clouds punch
 		// straight through both water and lava fog (GH issue #3). Skip the whole pass while the
 		// camera eye is submerged.
 		Entity camera = minecraft.getRenderViewEntity();
@@ -138,7 +138,7 @@ public class BetterWeatherRenderer {
 	 * z-clip ("disappear into the fog"). Only widens the plane when clouds exceed the world far - 	 * at default view distance the world projection is used unchanged.
 	 */
 	private static void renderCloudsExtendedFar(float delta, Minecraft minecraft) {
-		float cloudFar = CLOUD_RENDERER.getViewDistanceBlocks() + 64F;
+		float cloudFar = CLOUD_RENDERER.getRenderDistanceBlocks() + 64F;
 		AccessorEntityRenderer acc = (AccessorEntityRenderer) minecraft.entityRenderer;
 		float worldFar = acc.bw_getFarPlaneDistance() * MathHelper.SQRT_2;
 		if (cloudFar <= worldFar) {

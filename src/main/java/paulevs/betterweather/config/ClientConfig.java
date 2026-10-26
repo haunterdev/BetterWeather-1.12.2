@@ -16,6 +16,7 @@ public class ClientConfig {
 	private static boolean betaRainColor;
 	private static int cloudViewDistance;
 	private static boolean waterHidesClouds;
+	private static boolean cloudFog;
 
 	public static void init() {
 		defineEntries();
@@ -29,10 +30,16 @@ public class ClientConfig {
 			"Render clouds fluffy, if false clouds will use block-like rendering",
 			"Default value is true"
 		);
+		CONFIG.addEntry("cloudFog", true,
+			"Clouds fade into the fog with distance, like terrain and vanilla clouds, and stop at",
+			"1.5x the render distance, as in the original mod.",
+			"false = clouds draw without fog out to cloudViewDistanceChunks.",
+			"Default value is true"
+		);
 		CONFIG.addEntry("cloudViewDistanceChunks", 9,
 			"How far clouds render, as a radius in 32-block cloud tiles.",
-			"Clouds draw without fog, so higher values let you watch distant rain fronts approach,",
-			"beyond the terrain render distance.",
+			"With cloudFog off, higher values let you watch distant rain fronts approach beyond the",
+			"terrain render distance. With it on, clouds stop at 1.5x the render distance or this, whichever is nearer.",
 			"Minimum 4. There is no soft cap: values above " + CloudRenderer.LAG_WARN_RADIUS
 				+ " allocate a lot of cloud geometry and can cause HEAVY LAG (the in-game",
 			"slider warns past that point). Hard ceiling is " + CloudRenderer.HARD_MAX_RADIUS
@@ -57,6 +64,7 @@ public class ClientConfig {
 		fluffyClouds = CONFIG.getBool("fluffyClouds");
 		betaRainColor = CONFIG.getBool("b173RainColor");
 		waterHidesClouds = CONFIG.getBool("waterHidesClouds");
+		cloudFog = CONFIG.getBool("cloudFog");
 		cloudViewDistance = clampViewDistance(CONFIG.getInt("cloudViewDistanceChunks"));
 	}
 
@@ -79,6 +87,18 @@ public class ClientConfig {
 	/** Write translucent-block depth before clouds and rain so nearer water hides them. */
 	public static boolean waterHidesClouds() {
 		return waterHidesClouds;
+	}
+
+	/** Draw clouds inside the terrain fog and stop them at 1.5x the fog distance. */
+	public static boolean cloudFog() {
+		return cloudFog;
+	}
+
+	/** Live-set cloud fog and persist. Applied next frame (read per-frame). */
+	public static void setCloudFog(boolean value) {
+		cloudFog = value;
+		CONFIG.set("cloudFog", value);
+		CONFIG.flush();
 	}
 
 	/** Raw config flag (ignores the fancy-graphics gate that {@link #renderFluffy()} applies). */

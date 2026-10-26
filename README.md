@@ -16,9 +16,9 @@ rebuilt on the 1.12.2 rendering pipeline.
 - **Local weather.** Rain and snow are tied to cloud fronts. Weather moves across the world with the clouds rather than toggling globally.
 - **Better rain and snow rendering.** Precipitation uses level of detail and renders over larger distances.
 - **Better weather sounds.** Improved rain ambience.
-- **Clouds beyond render distance.** Clouds can extend past the terrain view distance without clipping at the far plane.
+- **Cloud fog.** Clouds fade into the fog with distance, like terrain and vanilla clouds, as in the original mod. With Cloud Fog off they draw past the terrain view distance without clipping at the far plane, so distant rain fronts stay visible.
 - **Serene Seasons.** With Serene Seasons installed, the seasonal temperature decides whether a column gets rain or snow.
-- **In game config.** Cloud height presets (Beta 108 / vanilla 128 / custom), fluffy toggle, rain color, vanilla rain control, frequent rain, cloud speed, and cloud view distance are editable live under Mods, Better Weather, Config.
+- **In game config.** Cloud height presets (Beta 108 / vanilla 128 / custom), fluffy toggle, cloud fog, rain color, vanilla rain control, frequent rain, cloud speed, and cloud view distance are editable live under Mods, Better Weather, Config.
 
 ## Commands
 
@@ -47,7 +47,7 @@ singleplayer and on any server, and do not conflict with server-side command lib
 ## Installation
 
 1. Install Minecraft Forge for 1.12.2.
-2. Put MixinBooter and `better_weather-1.1.1.jar` into your `mods` folder.
+2. Put MixinBooter and `better_weather-1.1.2.jar` into your `mods` folder.
 3. Launch the game.
 
 ## License

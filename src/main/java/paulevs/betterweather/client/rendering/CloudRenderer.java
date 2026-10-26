@@ -39,9 +39,10 @@ public class CloudRenderer {
 	// Soft threshold above which the in-game config warns about heavy lag.
 	public static final int LAG_WARN_RADIUS = 16;
 	// Baseline pool radius pre-allocated up front; the pool only grows beyond this if the
-	// configured view distance is larger. Clouds draw fog-less, so a larger viewRadius shows
-	// distant rain fronts approaching well beyond the terrain render distance.
+	// configured view distance is larger. With cloud fog off, a larger viewRadius shows distant
+	// rain fronts approaching well beyond the terrain render distance.
 	private static final int MIN_POOL_RADIUS = 16;
+	// Terrain far plane distance, set from RenderFogEvent each frame (the original's mechanism).
 	public static float fogDistance;
 	private int viewRadius = 9;
 	// Pool sizing - dynamic so the view distance can exceed the old fixed cap. 'maxRadius' is the
@@ -113,9 +114,17 @@ public class CloudRenderer {
 		viewRadius = r;
 	}
 
-	/** Current cloud cull radius in blocks (viewRadius tiles * 32). */
-	public int getViewDistanceBlocks() {
-		return viewRadius * 32;
+	/**
+	 * Current cloud cull radius in blocks. The configured radius (viewRadius tiles * 32), and with
+	 * cloud fog on no further than the original's 1.5x the terrain fog distance, where the fog has
+	 * hidden them.
+	 */
+	public float getRenderDistanceBlocks() {
+		float blocks = viewRadius * 32F;
+		if (ClientConfig.cloudFog() && fogDistance > 0F) {
+			blocks = Math.min(blocks, fogDistance * 1.5F);
+		}
+		return blocks;
 	}
 
 	private static int clampRadius(int r) {
@@ -206,13 +215,21 @@ public class CloudRenderer {
 		// so the closest (most visible) chunks are rebuilt first. A small budget catches up in
 		// a few frames without a large single-frame hitch.
 		int updateBudget = MAX_UPDATES_PER_FRAME;
-		int vr = viewRadius;
+		// Hard cull at the render distance (in blocks). offsets are sorted nearest-first, so once
+		// one is beyond the radius every remaining one is too - break.
+		float distance = getRenderDistanceBlocks();
+		int vr = MathHelper.ceil(distance / 32F);
 		int vrSqr = vr * vr;
-		// Hard cull at the view radius (in blocks), decoupled from fog so clouds extend past the
-		// terrain render distance. offsets are sorted nearest-first, so once one is beyond the
-		// radius every remaining one is too - break.
-		float distance = vr * 32F;
 		distance *= distance;
+
+		// The original drew clouds inside the terrain fog (Beta's renderClouds ran with fog on).
+		// Vanilla disables fog just before RenderWorldLastEvent, but GL still holds this frame's
+		// terrain fog setup (setupFog(0): mode, range, colour, weather fog included), so turning
+		// it back on fades clouds exactly like terrain.
+		boolean fog = ClientConfig.cloudFog();
+		if (fog) {
+			GlStateManager.enableFog();
+		}
 
 		for (int[] offset : offsets) {
 			if (offset[0] * offset[0] + offset[1] * offset[1] > vrSqr) break;
@@ -230,6 +247,10 @@ public class CloudRenderer {
 			if (!chunk.needUpdate()) {
 				chunk.render(entityX, entityZ, height, culling, distance);
 			}
+		}
+
+		if (fog) {
+			GlStateManager.disableFog();
 		}
 
 		// End with the lightmap unit DISABLED, matching vanilla renderRainSnow (which ends on

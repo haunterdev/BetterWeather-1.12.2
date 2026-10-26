@@ -26,6 +26,7 @@ public class BWConfigGui extends GuiScreen {
 	private static final int ID_RAIN = 3;
 	private static final int ID_VANILLA_RAIN = 4;
 	private static final int ID_FREQUENT_RAIN = 5;
+	private static final int ID_CLOUD_FOG = 6;
 	private static final int ID_HEIGHT = 10;
 	private static final int ID_SPEED = 11;
 	private static final int ID_VIEWDIST = 12;
@@ -39,6 +40,7 @@ public class BWConfigGui extends GuiScreen {
 
 	private GuiButton presetButton;
 	private GuiButton fluffyButton;
+	private GuiButton cloudFogButton;
 	private GuiButton rainButton;
 	private GuiButton vanillaRainButton;
 	private GuiButton frequentRainButton;
@@ -72,8 +74,10 @@ public class BWConfigGui extends GuiScreen {
 		this.buttonList.add(heightSlider);
 		y += 24;
 
-		fluffyButton = new GuiButton(ID_FLUFFY, x, y, 200, 20, fluffyLabel());
+		fluffyButton = new GuiButton(ID_FLUFFY, x, y, 98, 20, fluffyLabel());
 		this.buttonList.add(fluffyButton);
+		cloudFogButton = new GuiButton(ID_CLOUD_FOG, x + 102, y, 98, 20, cloudFogLabel());
+		this.buttonList.add(cloudFogButton);
 		y += 24;
 
 		rainButton = new GuiButton(ID_RAIN, x, y, 200, 20, rainLabel());
@@ -159,6 +163,10 @@ public class BWConfigGui extends GuiScreen {
 				BetterWeatherRenderer.updateClouds();
 				button.displayString = vanillaRainLabel();
 				break;
+			case ID_CLOUD_FOG:
+				ClientConfig.setCloudFog(!ClientConfig.cloudFog());
+				button.displayString = cloudFogLabel();
+				break;
 			case ID_FREQUENT_RAIN:
 				CommonConfig.setFrequentRain(!CommonConfig.isFrequentRain());
 				// Front strength changed -> cloud volume must be recomputed.
@@ -220,6 +228,10 @@ public class BWConfigGui extends GuiScreen {
 
 	private static String fluffyLabel() {
 		return "Fluffy Clouds: " + (ClientConfig.isFluffyClouds() ? "ON" : "OFF");
+	}
+
+	private static String cloudFogLabel() {
+		return "Cloud Fog: " + (ClientConfig.cloudFog() ? "ON" : "OFF");
 	}
 
 	private static String rainLabel() {
